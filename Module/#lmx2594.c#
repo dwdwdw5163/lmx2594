@@ -23,7 +23,7 @@ void LMX2594_Init() {
   LMX2595_WriteReg(0x00, 0x2412);
   LMX2595_WriteReg(0x00, 0x2410);
 
-  for (int i = 0; i < sizeof(configs)/4; i++) {
+  for (int i = 0; i < ; i++) {
     LMX2595_WriteReg(configs[i].addr, configs[i].data);
   }
   HAL_Delay(10);
@@ -106,7 +106,7 @@ void DrawUI() {
   ssd1306_SetCursor(7, 2);
   ssd1306_WriteString("PD", Font_6x8, White);
   ssd1306_SetCursor(19, 0);
-  ssd1306_WriteString("=200 MHz", Font_7x10, White);
+  ssd1306_WriteString("=200MHz", Font_7x10, White);
 
   ssd1306_SetCursor(0, 11);
   ssd1306_WriteChar('f', Font_7x10, White);

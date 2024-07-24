@@ -11,5 +11,6 @@ void LMX2594_Init();
 void LMX2595_WriteReg(uint8_t addr, uint16_t data);
 uint32_t LMX2594_ReadReg(uint8_t addr);
 
+void DrawUI();
 
 #endif

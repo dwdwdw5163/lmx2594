@@ -18,8 +18,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "i2c.h"
 #include "spi.h"
-#include "stm32f4xx_hal_gpio.h"
+#include "ssd1306_fonts.h"
 #include "tim.h"
 #include "usart.h"
 #include "usb_device.h"
@@ -28,9 +29,10 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "lmx2594.h"
+#include "ssd1306.h"
 #include "usbd_cdc_if.h"
+#include <math.h>
 #include <stdint.h>
-#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,6 +54,8 @@
 
 /* USER CODE BEGIN PV */
 char uart_data[64];
+uint32_t PLL_N, PLL_DEN, PLL_NUM;
+float f_VCO, f_OUT;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -97,7 +101,19 @@ int main(void)
   MX_TIM1_Init();
   MX_USART1_UART_Init();
   MX_USB_DEVICE_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
+  ssd1306_Init();
+  ssd1306_Fill(White);
+  ssd1306_UpdateScreen();
+  
+  HAL_Delay(1000);
+  ssd1306_Fill(Black);
+  ssd1306_UpdateScreen();
+
+  DrawUI();
+  ssd1306_UpdateScreen();
+
   LMX2594_Init();
   /* USER CODE END 2 */
 
@@ -105,19 +121,44 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* HAL_Delay(500); */
-    /* HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 0); */
-    /* uint32_t data = 0; */
-    /* data = LMX2594_ReadReg(0x00); */
-    /* uint32_t len =  sprintf(uart_data, "Addr 0x0: %x\r\n", data); */
-    /* CDC_Transmit_FS((uint8_t *)uart_data, len); */
-    /* HAL_Delay(500); */
-    /* HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 1); */
-    if (HAL_GPIO_ReadPin(MISO_GPIO_Port, MISO_Pin)) {
+    HAL_Delay(33);
+    uint32_t len = 0;
+    uint32_t data = 0;
+    data = LMX2594_ReadReg(0x6e);
+    len = sprintf(uart_data, "Lock Detect: %x\r\n", data);
+    CDC_Transmit_FS((uint8_t *)uart_data, len);
+    
+    if ((data & 0x0600) == 0x0400) {
       HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 0);
     } else {
       HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 1);
     }
+
+    PLL_N = LMX2594_ReadReg(36);
+
+    PLL_DEN = LMX2594_ReadReg(38);
+    PLL_DEN = (PLL_DEN << 16) |  LMX2594_ReadReg(39);
+
+    PLL_NUM = LMX2594_ReadReg(42);
+    PLL_NUM = (PLL_NUM << 16) |  LMX2594_ReadReg(43);
+
+    f_VCO = 200.0 * (PLL_N+((float_t)PLL_NUM/(float_t)PLL_DEN));
+    len = sprintf(uart_data, "%d MHz", (int)f_VCO);
+    ssd1306_SetCursor(32, 11);
+    ssd1306_WriteString(uart_data, Font_7x10, White);//start from 32px
+
+
+    ssd1306_UpdateScreen();
+    /* HAL_Delay(500); */
+    /* HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 1); */
+
+    /* if (HAL_GPIO_ReadPin(MISO_GPIO_Port, MISO_Pin)) { */
+    /*   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 0); */
+
+    /* } else { */
+    /*   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 1); */
+
+    /* } */
     
     /* USER CODE END WHILE */
 
