@@ -6,6 +6,10 @@
 #include "lmx2594_config.h"
 #include "ssd1306.h"
 
+
+
+
+
 // Define a macro to set a GPIO pin to low
 #define LOW(x) HAL_GPIO_WritePin(x##_GPIO_Port, x##_Pin, GPIO_PIN_RESET)
 
@@ -106,7 +110,10 @@ void DrawUI() {
   ssd1306_SetCursor(7, 2);
   ssd1306_WriteString("PD", Font_6x8, White);
   ssd1306_SetCursor(19, 0);
-  ssd1306_WriteString("=200 MHz", Font_7x10, White);
+  ssd1306_WriteString("=200MHz", Font_7x10, White);//start from 68px
+
+  ssd1306_SetCursor(68, 0);
+  ssd1306_WriteString("UNLOCKED", Font_7x10, Black);//start from 68px
 
   ssd1306_SetCursor(0, 11);
   ssd1306_WriteChar('f', Font_7x10, White);

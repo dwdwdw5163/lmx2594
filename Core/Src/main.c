@@ -55,6 +55,7 @@
 /* USER CODE BEGIN PV */
 char uart_data[64];
 uint32_t PLL_N, PLL_DEN, PLL_NUM;
+uint32_t OUTA_MUX, OUTB_MUX, CHDIV;
 float f_VCO, f_OUT;
 /* USER CODE END PV */
 
@@ -130,8 +131,12 @@ int main(void)
     
     if ((data & 0x0600) == 0x0400) {
       HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 0);
+      ssd1306_SetCursor(68, 0);
+      ssd1306_WriteString("  LOCKED", Font_7x10, Black);//start from 68px
     } else {
       HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 1);
+      ssd1306_SetCursor(68, 0);
+      ssd1306_WriteString("UNLOCKED", Font_7x10, Black);//start from 68px
     }
 
     PLL_N = LMX2594_ReadReg(36);
@@ -143,10 +148,18 @@ int main(void)
     PLL_NUM = (PLL_NUM << 16) |  LMX2594_ReadReg(43);
 
     f_VCO = 200.0 * (PLL_N+((float_t)PLL_NUM/(float_t)PLL_DEN));
-    len = sprintf(uart_data, "%d MHz", (int)f_VCO);
+    len = sprintf(uart_data, "%.2fMHz", f_VCO);
     ssd1306_SetCursor(32, 11);
     ssd1306_WriteString(uart_data, Font_7x10, White);//start from 32px
 
+    
+    OUTA_MUX = (LMX2594_ReadReg(45) >> 11) & 0x03;
+    CHDIV = (LMX2594_ReadReg(75) >> 6) & 0x1f;
+
+    f_OUT = OUTA_MUX == 0 ? f_VCO/CHDIV_MAP[CHDIV] : f_VCO;
+    len = sprintf(uart_data, "%.2fMHz", f_OUT);
+    ssd1306_SetCursor(32, 21);
+    ssd1306_WriteString(uart_data, Font_7x10, White);//start from 32px
 
     ssd1306_UpdateScreen();
     /* HAL_Delay(500); */
